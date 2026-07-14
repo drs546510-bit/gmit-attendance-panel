@@ -1,0 +1,28 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Import Students{% endblock %}
+{% block content %}
+<div class="topbar"><h3>Import Student List (Excel)</h3></div>
+<div class="card-panel" style="max-width:600px;">
+    <p class="text-muted small">
+        Upload an <code>.xlsx</code> file with columns in this order: <b>Sl.No, USN, Name</b>.
+        The first row should be a header row (it will be skipped automatically).
+    </p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Branch</label>
+            {{ form.branch }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Semester</label>
+            {{ form.semester }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Excel File</label>
+            {{ form.excel_file }}
+        </div>
+        <button type="submit" class="btn btn-brand">Upload &amp; Import</button>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

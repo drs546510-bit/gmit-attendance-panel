@@ -1,0 +1,45 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Assign Teacher{% endblock %}
+{% block content %}
+<div class="topbar"><h3>Manage Assignments — {{ profile.user.get_full_name|default:profile.user.username }}</h3></div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card-panel">
+            <h5>Add Assignment</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Branch</label>
+                    {{ form.branch }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Semester</label>
+                    {{ form.semester }}
+                </div>
+                <button type="submit" class="btn btn-brand">Add</button>
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card-panel">
+            <h5>Current Assignments</h5>
+            <table class="attend-table">
+                <thead><tr><th>Branch</th><th>Semester</th><th></th></tr></thead>
+                <tbody>
+                {% for a in assignments %}
+                    <tr>
+                        <td><span class="branch-pill">{{ a.branch }}</span></td>
+                        <td>Sem {{ a.semester }}</td>
+                        <td><a href="{% url 'remove_assignment' a.id %}" class="btn btn-sm btn-outline-danger">Remove</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center">No assignments yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
