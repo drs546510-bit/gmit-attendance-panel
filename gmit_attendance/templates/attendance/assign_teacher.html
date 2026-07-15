@@ -1,0 +1,73 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Assign Teacher{% endblock %}
+{% block content %}
+<div class="topbar"><h3>Manage Assignments — {{ profile.user.get_full_name|default:profile.user.username }}</h3></div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card-panel">
+            <h5>Add Assignment</h5>
+            <p class="text-muted small">Pick Branch + Semester first — the Subject list below updates to match.</p>
+            <form method="get" class="mb-3">
+                <div class="mb-3">
+                    <label class="form-label small">Branch</label>
+                    <select name="branch" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- choose --</option>
+                        {% for code, label in form.fields.branch.choices %}
+                            <option value="{{ code }}" {% if selected_branch == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">Semester</label>
+                    <select name="semester" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- choose --</option>
+                        {% for num, label in form.fields.semester.choices %}
+                            <option value="{{ num }}" {% if selected_semester == num|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            {% if selected_branch and selected_semester %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="branch" value="{{ selected_branch }}">
+                <input type="hidden" name="semester" value="{{ selected_semester }}">
+                <div class="mb-3">
+                    <label class="form-label small">Subject</label>
+                    {{ form.subject }}
+                    {% if form.subject.field.queryset|length == 0 %}
+                        <div class="text-muted small mt-1">No subjects exist yet for this branch/semester. Add one under <a href="{% url 'manage_subjects' %}">Manage Subjects</a> first.</div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-brand">Add Assignment</button>
+            </form>
+            {% else %}
+                <div class="text-muted small">Choose a branch and semester above to see available subjects.</div>
+            {% endif %}
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary mt-2">Back</a>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card-panel">
+            <h5>Current Assignments</h5>
+            <table class="attend-table">
+                <thead><tr><th>Subject</th><th>Branch</th><th>Semester</th><th></th></tr></thead>
+                <tbody>
+                {% for a in assignments %}
+                    <tr>
+                        <td>{{ a.subject.name }}</td>
+                        <td><span class="branch-pill">{{ a.branch }}</span></td>
+                        <td>Sem {{ a.semester }}</td>
+                        <td><a href="{% url 'remove_assignment' a.id %}" class="btn btn-sm btn-outline-danger">Remove</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-muted text-center">No assignments yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

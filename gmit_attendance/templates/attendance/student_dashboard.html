@@ -1,0 +1,113 @@
+{% extends 'attendance/base.html' %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h3>My Attendance</h3>
+    <div class="clock" id="liveClock"></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ student.usn }}</div>
+            <div class="stat-label">{{ student.name }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#17b978;">{{ present_days }}</div>
+            <div class="stat-label">Present Days (overall)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value" style="color:#ef4444;">{{ absent_days }}</div>
+            <div class="stat-label">Absent Days (overall)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ percentage }}%</div>
+            <div class="stat-label">Overall Attendance %</div>
+        </div>
+    </div>
+</div>
+
+<p class="text-muted small">{{ branch_label }} · Semester {{ student.semester }} — <b>view-only</b>: you cannot edit or mark your own attendance.</p>
+
+<div class="card-panel">
+    <h5>📚 Attendance by Subject</h5>
+    <table class="attend-table">
+        <thead><tr><th>Subject</th><th>Present</th><th>Absent</th><th>Total</th><th>Percentage</th></tr></thead>
+        <tbody>
+        {% for row in subject_breakdown %}
+            <tr>
+                <td>{{ row.subject.name }}</td>
+                <td>{{ row.present_days }}</td>
+                <td>{{ row.absent_days }}</td>
+                <td>{{ row.total_days }}</td>
+                <td>
+                    {% if row.percentage >= 75 %}<span class="badge-present">{{ row.percentage }}%</span>
+                    {% elif row.percentage >= 1 %}<span class="badge-absent">{{ row.percentage }}%</span>
+                    {% else %}<span class="badge-neutral">No data</span>{% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-muted text-center">No subjects have been set up for your branch/semester yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card-panel">
+            <h5>Present vs Absent (overall)</h5>
+            <canvas id="pieChart" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card-panel">
+            <h5>Recent Attendance — All Subjects (last 60 records)</h5>
+            <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+            <table class="attend-table">
+                <thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for r in records %}
+                    <tr>
+                        <td>{{ r.date|date:"d-M-Y" }}</td>
+                        <td>{{ r.subject.name|default:"General" }}</td>
+                        <td>
+                            {% if r.status == 'PRESENT' %}<span class="badge-present">Present</span>
+                            {% else %}<span class="badge-absent">Absent</span>{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center">No attendance marked yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function updateClock() {
+    const el = document.getElementById('liveClock');
+    const now = new Date();
+    el.textContent = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + '  ' + now.toLocaleTimeString('en-IN');
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Present', 'Absent'],
+        datasets: [{ data: [{{ present_days }}, {{ absent_days }}], backgroundColor: ['#17b978', '#ef4444'] }]
+    }
+});
+</script>
+{% endblock %}

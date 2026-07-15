@@ -1,0 +1,30 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Export Reports{% endblock %}
+{% block content %}
+<div class="topbar"><h3>Export Attendance Reports</h3></div>
+
+<div class="card-panel">
+    <p class="text-muted small">
+        Download an Excel file for any subject — every student as a row, every class date/session as a column
+        (P = Present, A = Absent, - = not marked), plus Total/Present/Absent/Percentage summary columns.
+    </p>
+    <table class="attend-table">
+        <thead><tr><th>Subject</th><th>Branch</th><th>Semester</th><th></th></tr></thead>
+        <tbody>
+        {% for s in subjects %}
+            <tr>
+                <td>{{ s.name }}</td>
+                <td><span class="branch-pill">{{ s.branch }}</span></td>
+                <td>Sem {{ s.semester }}</td>
+                <td>
+                    <a href="{% url 'export_subject_attendance' s.id %}" class="btn btn-sm btn-brand">📥 Download Excel</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="text-muted text-center">No subjects yet. Add one under Manage Subjects first.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+{% endblock %}

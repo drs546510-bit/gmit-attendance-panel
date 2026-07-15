@@ -1,0 +1,62 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Manage Subjects{% endblock %}
+{% block content %}
+<div class="topbar"><h3>Manage Subjects</h3></div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card-panel">
+            <h5>Add a Subject</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Subject Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Subject Code (optional)</label>
+                    {{ form.code }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Branch</label>
+                    {{ form.branch }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Semester</label>
+                    {{ form.semester }}
+                </div>
+                {% for field in form %}
+                    {% if field.errors %}<div class="text-danger small">{{ field.label }}: {{ field.errors|striptags }}</div>{% endif %}
+                {% endfor %}
+                <button type="submit" class="btn btn-brand">Add Subject</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card-panel">
+            <h5>All Subjects</h5>
+            <table class="attend-table">
+                <thead><tr><th>Subject</th><th>Code</th><th>Branch</th><th>Semester</th><th></th></tr></thead>
+                <tbody>
+                {% for s in subjects %}
+                    <tr>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.code|default:"-" }}</td>
+                        <td><span class="branch-pill">{{ s.branch }}</span></td>
+                        <td>Sem {{ s.semester }}</td>
+                        <td>
+                            <a href="{% url 'export_subject_attendance' s.id %}" class="btn btn-sm btn-outline-secondary">📥 Export</a>
+                            <a href="{% url 'delete_subject' s.id %}" class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Delete this subject? Any related assignments/attendance will be removed too.');">Delete</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-muted text-center">No subjects added yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+{% endblock %}

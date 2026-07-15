@@ -1,0 +1,152 @@
+{% extends 'attendance/base.html' %}
+{% block title %}{{ subject.name }} — {{ branch }} Sem {{ semester }}{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h3>{{ subject.name }} <span class="text-muted" style="font-weight:400;">— {{ branch_label }}, Semester {{ semester }}</span></h3>
+    <div class="clock" id="liveClock"></div>
+</div>
+
+<div class="card-panel">
+    <form method="get" class="d-flex align-items-end gap-3 mb-3 flex-wrap">
+        <div>
+            <label class="form-label small mb-1">Attendance Date</label>
+            <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </div>
+        <div>
+            <label class="form-label small mb-1">Session</label>
+            <select name="session" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:160px;">
+                {% for s in existing_sessions %}
+                    <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>Session {{ s }}</option>
+                {% endfor %}
+                {% if next_session not in existing_sessions %}
+                    <option value="{{ next_session }}" {% if next_session == selected_session %}selected{% endif %}>+ Start Session {{ next_session }} (new)</option>
+                {% endif %}
+            </select>
+        </div>
+        <span class="text-muted small">
+            A subject taught more than once on the same day (e.g. two Physics periods)? Switch the Session dropdown —
+            each session keeps its own independent attendance and counts as a separate class in the totals.
+        </span>
+    </form>
+
+    <div class="table-responsive">
+    <table class="attend-table" id="attendTable">
+        <thead>
+        <tr>
+            <th>Sl.No</th>
+            <th>USN</th>
+            <th>Student Name</th>
+            <th>Mark Attendance</th>
+            <th>Status</th>
+            <th>Present Classes</th>
+            <th>Absent Classes</th>
+            <th>Total Classes</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+        <tr id="row-{{ row.student.id }}">
+            <td>{{ row.sl_no }}</td>
+            <td><b>{{ row.student.usn }}</b></td>
+            <td>{{ row.student.name }}</td>
+            <td>
+                <button class="btn-toggle btn-present {% if row.status_today == 'PRESENT' %}active{% endif %}"
+                        onclick="markAttendance({{ row.student.id }}, 'PRESENT')">Present</button>
+                <button class="btn-toggle btn-absent {% if row.status_today == 'ABSENT' %}active{% endif %}"
+                        onclick="markAttendance({{ row.student.id }}, 'ABSENT')">Absent</button>
+            </td>
+            <td id="status-{{ row.student.id }}">
+                {% if row.status_today == 'PRESENT' %}<span class="badge-present">Present</span>
+                {% elif row.status_today == 'ABSENT' %}<span class="badge-absent">Absent</span>
+                {% else %}<span class="badge-neutral">Not marked</span>{% endif %}
+            </td>
+            <td id="present-{{ row.student.id }}">{{ row.present_days }}</td>
+            <td id="absent-{{ row.student.id }}">{{ row.absent_days }}</td>
+            <td id="total-{{ row.student.id }}">{{ row.total_days }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted">No students found. Import the student list first.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card-panel">
+            <h5>📊 Present vs Absent (this class, all-time)</h5>
+            <canvas id="classChart" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<a href="{% url 'teacher_dashboard' %}" class="btn btn-outline-secondary">Back to My Classes</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateClock() {
+    const el = document.getElementById('liveClock');
+    const now = new Date();
+    el.textContent = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + '  ' + now.toLocaleTimeString('en-IN');
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function markAttendance(studentId, status) {
+    fetch("{% url 'mark_attendance' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            status: status,
+            date: "{{ selected_date|date:'Y-m-d' }}",
+            assignment_id: {{ assignment.id }},
+            session_number: {{ selected_session }},
+        }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.ok) { alert('Could not save attendance: ' + (data.error || 'unknown error')); return; }
+
+        const row = document.getElementById('row-' + studentId);
+        row.querySelectorAll('.btn-present, .btn-absent').forEach(b => b.classList.remove('active'));
+        row.querySelector(data.status === 'PRESENT' ? '.btn-present' : '.btn-absent').classList.add('active');
+
+        const statusCell = document.getElementById('status-' + studentId);
+        statusCell.innerHTML = data.status === 'PRESENT'
+            ? '<span class="badge-present">Present</span>'
+            : '<span class="badge-absent">Absent</span>';
+
+        document.getElementById('present-' + studentId).textContent = data.present_days;
+        document.getElementById('absent-' + studentId).textContent = data.absent_days;
+        document.getElementById('total-' + studentId).textContent = data.total_days;
+    })
+    .catch(err => alert('Network error: ' + err));
+}
+
+fetch("{% url 'teacher_chart_data' assignment.id %}").then(r => r.json()).then(data => {
+    new Chart(document.getElementById('classChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [
+                { label: 'Present', data: data.present, backgroundColor: '#17b978', borderRadius: 5 },
+                { label: 'Absent', data: data.absent, backgroundColor: '#ef4444', borderRadius: 5 },
+            ]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+});
+</script>
+{% endblock %}

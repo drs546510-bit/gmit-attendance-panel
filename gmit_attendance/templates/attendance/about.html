@@ -1,0 +1,115 @@
+{% extends 'attendance/base.html' %}
+{% block title %}About — GMIT Student Attendance Panel{% endblock %}
+{% block content %}
+
+<div class="about-hero">
+    <h2>GMIT Student Attendance Panel</h2>
+    <p>
+        A dedicated attendance management system built for B.E. students across
+        7 branches and 8 semesters — designed to make daily attendance marking
+        faster for teachers, transparent for students, and easy to oversee for
+        admins.
+    </p>
+</div>
+
+<div class="card-panel" style="margin-bottom:24px;">
+    <h5>👨‍💻 About the Developer</h5>
+    <div class="dev-card" style="box-shadow:none; border:none; padding:8px 0;">
+        <div class="dev-avatar">DRS</div>
+        <div>
+            <div class="dev-name">Darshan RS</div>
+            <div class="dev-role">Creator &amp; Developer — GMIT Student Attendance Panel</div>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-chip">
+            <div class="icon">🎓</div>
+            <div>
+                <div class="label">Course</div>
+                <div class="value">B.E. — Electrical &amp; Electronics Engineering (7th Semester)</div>
+            </div>
+        </div>
+        <div class="info-chip">
+            <div class="icon">🏫</div>
+            <div>
+                <div class="label">Institution</div>
+                <div class="value">GMIT</div>
+            </div>
+        </div>
+        <div class="info-chip">
+            <div class="icon">🆔</div>
+            <div>
+                <div class="label">USN</div>
+                <div class="value">4MG23EE013</div>
+            </div>
+        </div>
+        <div class="info-chip">
+            <div class="icon">📍</div>
+            <div>
+                <div class="label">Hometown</div>
+                <div class="value">Ragibommanahalli, Malavalli Taluk, Mandya District</div>
+            </div>
+        </div>
+        <div class="info-chip">
+            <div class="icon">📞</div>
+            <div>
+                <div class="label">Contact</div>
+                <div class="value">+91 87469 62941</div>
+            </div>
+        </div>
+        <div class="info-chip">
+            <div class="icon">✉️</div>
+            <div>
+                <div class="label">Email</div>
+                <div class="value">drs546510@gmail.com</div>
+            </div>
+        </div>
+    </div>
+
+    <p style="margin-top:20px; color:var(--text-600); font-size:0.9rem; line-height:1.6;">
+        This application was designed and built end-to-end — database design, backend logic,
+        and interface — as a hands-on engineering project alongside coursework, reflecting a
+        continued interest in building practical, full-stack software beyond the classroom.
+        For feedback, feature requests, or collaboration, feel free to reach out using the
+        contact details above.
+    </p>
+</div>
+
+<div class="card-panel">
+    <h5>⚙️ What This App Does</h5>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <div class="icon">🏛️</div>
+            <h6>7 Branches, 8 Semesters</h6>
+            <p>EE, CS, AI, EC, ME, CE, and CSD, each tracked across all 8 semesters independently.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">📥</div>
+            <h6>Bulk Excel Import</h6>
+            <p>Admins can import an entire class list in one upload instead of adding students one by one.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">✅</div>
+            <h6>One-Click Attendance</h6>
+            <p>Teachers mark Present/Absent instantly — no save button, no page reloads.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">🔐</div>
+            <h6>Role-Based Access</h6>
+            <p>Admins approve teacher accounts before they can mark attendance; students get view-only access.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">📊</div>
+            <h6>Live Charts</h6>
+            <p>Branch-wise and class-wise attendance trends, visualized automatically.</p>
+        </div>
+        <div class="feature-card">
+            <div class="icon">🗄️</div>
+            <h6>MySQL Powered</h6>
+            <p>Built on Django + MySQL for reliable, structured record-keeping.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
