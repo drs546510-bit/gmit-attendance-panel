@@ -1,18 +1,32 @@
 {% extends 'attendance/base.html' %}
-{% block title %}Attendance Sheet — {{ branch }} Sem {{ semester }}{% endblock %}
+{% block title %}{{ subject.name }} — {{ branch }} Sem {{ semester }}{% endblock %}
 {% block content %}
 <div class="topbar">
-    <h3>{{ branch_label }} — Semester {{ semester }}</h3>
+    <h3>{{ subject.name }} <span class="text-muted" style="font-weight:400;">— {{ branch_label }}, Semester {{ semester }}</span></h3>
     <div class="clock" id="liveClock"></div>
 </div>
 
 <div class="card-panel">
-    <form method="get" class="d-flex align-items-end gap-2 mb-3">
+    <form method="get" class="d-flex align-items-end gap-3 mb-3 flex-wrap">
         <div>
             <label class="form-label small mb-1">Attendance Date</label>
             <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control form-control-sm" onchange="this.form.submit()">
         </div>
-        <span class="text-muted small">Showing / marking attendance for the selected date. Defaults to today.</span>
+        <div>
+            <label class="form-label small mb-1">Session</label>
+            <select name="session" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width:160px;">
+                {% for s in existing_sessions %}
+                    <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>Session {{ s }}</option>
+                {% endfor %}
+                {% if next_session not in existing_sessions %}
+                    <option value="{{ next_session }}" {% if next_session == selected_session %}selected{% endif %}>+ Start Session {{ next_session }} (new)</option>
+                {% endif %}
+            </select>
+        </div>
+        <span class="text-muted small">
+            A subject taught more than once on the same day (e.g. two Physics periods)? Switch the Session dropdown —
+            each session keeps its own independent attendance and counts as a separate class in the totals.
+        </span>
     </form>
 
     <div class="table-responsive">
@@ -24,9 +38,9 @@
             <th>Student Name</th>
             <th>Mark Attendance</th>
             <th>Status</th>
-            <th>Present Days</th>
-            <th>Absent Days</th>
-            <th>Total Days</th>
+            <th>Present Classes</th>
+            <th>Absent Classes</th>
+            <th>Total Classes</th>
         </tr>
         </thead>
         <tbody>
@@ -97,6 +111,8 @@ function markAttendance(studentId, status) {
             student_id: studentId,
             status: status,
             date: "{{ selected_date|date:'Y-m-d' }}",
+            assignment_id: {{ assignment.id }},
+            session_number: {{ selected_session }},
         }),
     })
     .then(res => res.json())
@@ -119,7 +135,7 @@ function markAttendance(studentId, status) {
     .catch(err => alert('Network error: ' + err));
 }
 
-fetch("{% url 'teacher_chart_data' branch semester %}").then(r => r.json()).then(data => {
+fetch("{% url 'teacher_chart_data' assignment.id %}").then(r => r.json()).then(data => {
     new Chart(document.getElementById('classChart'), {
         type: 'bar',
         data: {

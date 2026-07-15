@@ -20,6 +20,8 @@
             {% if user.role == 'ADMIN' or user.is_superuser %}
                 <a class="nav-link" href="{% url 'admin_dashboard' %}">📊 Admin Dashboard</a>
                 <a class="nav-link" href="{% url 'import_students' %}">📥 Import Students</a>
+                <a class="nav-link" href="{% url 'manage_subjects' %}">📚 Manage Subjects</a>
+                <a class="nav-link" href="{% url 'export_reports' %}">📥 Export Reports</a>
             {% elif user.role == 'TEACHER' %}
                 <a class="nav-link" href="{% url 'teacher_dashboard' %}">🏫 My Classes</a>
             {% else %}

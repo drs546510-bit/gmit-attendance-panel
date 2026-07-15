@@ -5,13 +5,18 @@
 <div class="card-panel">
     <h5>Semester-wise Overview</h5>
     <table class="attend-table">
-        <thead><tr><th>Semester</th><th>Total Students</th><th>Present Today</th></tr></thead>
+        <thead><tr><th>Semester</th><th>Total Students</th><th>Present Today</th><th>Subjects</th></tr></thead>
         <tbody>
         {% for s in sem_data %}
             <tr>
                 <td>Semester {{ s.semester }}</td>
                 <td>{{ s.total }}</td>
                 <td>{{ s.present_today }}</td>
+                <td>
+                    {% for subj in s.subjects %}
+                        <span class="branch-pill">{{ subj.name }}</span>
+                    {% empty %}<span class="text-muted small">None yet</span>{% endfor %}
+                </td>
             </tr>
         {% endfor %}
         </tbody>

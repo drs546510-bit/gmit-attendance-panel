@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, BRANCH_CHOICES, SEMESTER_CHOICES
+from .models import CustomUser, BRANCH_CHOICES, SEMESTER_CHOICES, Subject
 
 
 class BootstrapFormMixin:
@@ -51,6 +51,28 @@ class ExcelImportForm(BootstrapFormMixin, forms.Form):
     )
 
 
+class SubjectForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Subject
+        fields = ['name', 'code', 'branch', 'semester']
+
+
 class TeacherAssignmentForm(BootstrapFormMixin, forms.Form):
+    """Admin picks a Branch + Semester first, then a Subject that belongs
+    to that exact branch+semester. The subject dropdown is filtered
+    server-side based on whatever branch/semester was submitted (a plain
+    page reload — no JS required, keeps things simple and reliable)."""
     branch = forms.ChoiceField(choices=BRANCH_CHOICES)
     semester = forms.ChoiceField(choices=SEMESTER_CHOICES)
+    subject = forms.ModelChoiceField(queryset=Subject.objects.none(), required=True)
+
+    def __init__(self, *args, **kwargs):
+        selected_branch = kwargs.pop('selected_branch', None)
+        selected_semester = kwargs.pop('selected_semester', None)
+        super().__init__(*args, **kwargs)
+        if selected_branch and selected_semester:
+            self.fields['subject'].queryset = Subject.objects.filter(
+                branch=selected_branch, semester=selected_semester
+            )
+        else:
+            self.fields['subject'].queryset = Subject.objects.all()

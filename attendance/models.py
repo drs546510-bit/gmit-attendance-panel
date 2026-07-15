@@ -43,18 +43,50 @@ class TeacherProfile(models.Model):
         return f"{self.user.get_full_name() or self.user.username} - {'Approved' if self.is_approved else 'Pending'}"
 
 
-class TeacherAssignment(models.Model):
-    """Which branch + semester a teacher is allowed to mark attendance for.
-    Assigned by the Admin only."""
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='assignments')
+class Subject(models.Model):
+    """A subject taught within a specific branch + semester, e.g.
+    'Physics' for EE Sem 1. Created by the Admin. Each subject gets its
+    own independent attendance sheet, even for the same branch+semester."""
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=20, blank=True)
     branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
     semester = models.IntegerField(choices=SEMESTER_CHOICES)
 
     class Meta:
-        unique_together = ('teacher', 'branch', 'semester')
+        unique_together = ('name', 'branch', 'semester')
+        ordering = ['branch', 'semester', 'name']
 
     def __str__(self):
-        return f"{self.teacher.user.username} -> {self.branch} Sem {self.semester}"
+        return f"{self.name} ({self.branch} Sem {self.semester})"
+
+
+class TeacherAssignment(models.Model):
+    """Which subject (within a branch + semester) a teacher is allowed to
+    mark attendance for. Assigned by the Admin only. A teacher can hold
+    multiple assignments across different subjects/branches/semesters."""
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='assignments')
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, related_name='assignments',
+        null=True, blank=True,  # null only for old pre-subject rows created before this update
+    )
+
+    # Kept for convenience/backward compatibility with existing code and
+    # data (they always match subject.branch / subject.semester).
+    branch = models.CharField(max_length=5, choices=BRANCH_CHOICES)
+    semester = models.IntegerField(choices=SEMESTER_CHOICES)
+
+    class Meta:
+        unique_together = ('teacher', 'subject')
+
+    def save(self, *args, **kwargs):
+        # Keep branch/semester in sync with the chosen subject automatically.
+        if self.subject_id:
+            self.branch = self.subject.branch
+            self.semester = self.subject.semester
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.teacher.user.username} -> {self.subject}"
 
 
 class Student(models.Model):
@@ -79,14 +111,28 @@ class Attendance(models.Model):
     STATUS_CHOICES = [('PRESENT', 'Present'), ('ABSENT', 'Absent')]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, related_name='attendance_records',
+        null=True, blank=True,  # null only for old pre-subject rows; new rows always set this
+    )
     date = models.DateField(default=timezone.localdate)
+    session_number = models.PositiveSmallIntegerField(
+        default=1,
+        help_text="Lets the same subject be marked more than once on the same day "
+                   "(e.g. two periods of Physics). Session 1, Session 2, etc."
+    )
     status = models.CharField(max_length=8, choices=STATUS_CHOICES)
     marked_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True)
     marked_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('student', 'date')
-        ordering = ['-date']
+        # A student can now have one attendance row PER SUBJECT, PER DAY,
+        # PER SESSION — instead of only one row per subject per day. This
+        # lets a teacher mark two separate periods of the same subject on
+        # the same day without one overwriting the other.
+        unique_together = ('student', 'subject', 'date', 'session_number')
+        ordering = ['-date', 'session_number']
 
     def __str__(self):
-        return f"{self.student.usn} - {self.date} - {self.status}"
+        subject_label = self.subject.name if self.subject else "General"
+        return f"{self.student.usn} - {subject_label} - {self.date} (Session {self.session_number}) - {self.status}"

@@ -5,6 +5,19 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
+    """Creates (or updates) the Admin superuser from environment variables.
+
+    Safe to run on every deploy — if the user already exists, it does
+    nothing (except make sure it's still marked as an admin/superuser).
+    This lets you set your Admin login without needing Shell access,
+    which isn't available on Render's free tier.
+
+    Reads these environment variables:
+        ADMIN_USERNAME  (required to actually do anything)
+        ADMIN_EMAIL     (optional, defaults to admin@example.com)
+        ADMIN_PASSWORD  (required to actually do anything)
+    """
+
     help = "Creates the Admin superuser from ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD env vars."
 
     def handle(self, *args, **options):
